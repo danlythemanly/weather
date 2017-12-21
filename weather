@@ -1,8 +1,12 @@
 #!/bin/bash
 
-#FILES="forecast_hour_by_hour.xml forecast.xml"
 FILES="/tmp/f1 /tmp/f2"
 rm -f $FILES
+
+DATECMD=date
+if [ "x`uname`" == "xDarwin" ]; then
+    DATECMD=gdate
+fi
 
 wget http://www.yr.no/place/United_States/New_York/Tarrytown/forecast_hour_by_hour.xml -O /tmp/f1 >/dev/null 2>&1
 wget http://www.yr.no/place/United_States/New_York/Tarrytown/forecast.xml -O /tmp/f2 >/dev/null 2>&1
@@ -18,7 +22,6 @@ for t in $TIME; do
     C=`echo $CELSIUS | cut -d ' ' -f $i`
     P=`echo $PRECIP | cut -d ' ' -f $i`
     F=`echo "(($C * 1.8) + 32)" | bc`
-    D=`date -d "$t"`
     echo -e "$t $F $P $N"
 
     i=$((i+1))
@@ -26,9 +29,11 @@ done | sort -rn |uniq > /tmp/forecast
 
 cat /tmp/forecast | while read l; do
     t=`echo $l |cut -d ' ' -f 1`
-    D=`date -d "$t" +"%a %_I%P"`
-    echo -en "$D\t"
-    echo $l | cut -d ' ' -f 2- | sed s/" "/"\t"/g
+    F=`echo $l |cut -d ' ' -f 2`
+    P=`echo $l |cut -d ' ' -f 3`
+    N=`echo $l |cut -d ' ' -f 4`
+    D=`$DATECMD -d "$t" +"%a %_I%P"`
+    echo -e "$D\t$F\t$P\t$N"
 done
 
 
